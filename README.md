@@ -4,6 +4,11 @@ Predict pKa from a SMILES string with the thesis's **standard ML models** or the
 **FairChem UMA Basicity** model, via a browser GUI (Linux + Windows) or a Docker
 CLI. Inputs and outputs are cached to disk, so a repeat prediction is instant.
 
+> ### 📖 New here? See **[INSTALL.md](INSTALL.md)** for a full setup walkthrough
+> from zero (Docker install, HuggingFace account + token for the UMA model,
+> first launch, troubleshooting). The Quick start below is for those who already
+> have Docker.
+
 * **40 standard models** — ChEMBL 12C **and** 10C amine sets × {Morgan
   fingerprints, Joback-Reid groups, Benson groups, Maginn sigma profile} ×
   {MLP, Random Forest, SVR, XGBoost, CNN}. (Orca sigma is excluded.)
