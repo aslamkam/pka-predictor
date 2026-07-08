@@ -10,12 +10,13 @@ call "%~dp0scripts\fetch_assets.bat"
 if errorlevel 1 exit /b 1
 docker image inspect pkapredict >nul 2>&1
 if errorlevel 1 (
-  echo >> Building image 'pkapredict' (first run)... >&2
+  echo Building image 'pkapredict' - first run... >&2
   docker build -t pkapredict . >&2
 )
 REM Resolve HuggingFace token (for the gated uma-s-1p2 model) into a --env-file.
 set "HF_ENV="
-for /f "delims=" %%P in ('"%~dp0scripts\hf_env_file.bat"') do set "HF_ENV=%%P"
+REM usebackq + backticks handles the quoted script path (single-quote form breaks CMD).
+for /f "usebackq delims=" %%P in (`""%~dp0scripts\hf_env_file.bat""`) do set "HF_ENV=%%P"
 if defined HF_ENV (
   docker run --rm -i --env-file "%HF_ENV%" -v "%CD%\cache":/cache pkapredict %*
   del /q "%HF_ENV%" >nul 2>&1

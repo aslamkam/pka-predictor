@@ -9,18 +9,19 @@ call "%~dp0scripts\fetch_assets.bat"
 if errorlevel 1 exit /b 1
 docker image inspect pkapredict >nul 2>&1
 if errorlevel 1 (
-  echo >> Building image 'pkapredict' (first run; installs torch+fairchem - several minutes)...
+  echo Building image 'pkapredict' - first run; installs torch+fairchem - several minutes...
   docker build -t pkapredict .
 )
-echo >> GUI starting at http://localhost:7860  (Ctrl-C to stop)
+echo GUI starting at http://localhost:7860  - Ctrl-C to stop
 start "" http://localhost:7860
 REM Resolve HuggingFace token (for the gated uma-s-1p2 model) into a --env-file.
 set "HF_ENV="
-for /f "delims=" %%P in ('"%~dp0scripts\hf_env_file.bat"') do set "HF_ENV=%%P"
+REM usebackq + backticks handles the quoted script path (single-quote form breaks CMD).
+for /f "usebackq delims=" %%P in (`""%~dp0scripts\hf_env_file.bat""`) do set "HF_ENV=%%P"
 if defined HF_ENV (
   docker run --rm -p 7860:7860 --env-file "%HF_ENV%" -v "%CD%\cache":/cache pkapredict gui
   del /q "%HF_ENV%" >nul 2>&1
 ) else (
-  echo >> No HF_TOKEN found: UMA models will fail to download uma-s-1p2. See README. >&2
+  echo No HF_TOKEN found: UMA models will fail to download uma-s-1p2. See README.
   docker run --rm -p 7860:7860 -v "%CD%\cache":/cache pkapredict gui
 )
