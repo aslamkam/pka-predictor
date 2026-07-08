@@ -58,9 +58,26 @@ def _row_for(mid: str, rec: dict) -> dict:
 
 COLS = ["model", "chembl_pred", "computed_pred", "pasted_pred",
         "pKaH1", "pKaH2", "pKaH3", "dH_kJmol", "cx_pKa", "notes"]
+# Per-column Gradio datatype: "str" for text, "number" for numerics (so they
+# format as values, not "[object Object]"). Must line up with COLS.
+COL_TYPES = ["str", "number", "number", "number", "number", "number",
+             "number", "number", "number", "str"]
+_NUMERIC_COLS = {"chembl_pred", "computed_pred", "pasted_pred",
+                 "pKaH1", "pKaH2", "pKaH3", "dH_kJmol", "cx_pKa"}
 
 # Temperature-sweep results table: one row per grid point.
 SWEEP_COLS = ["temperature", "unit", "pKaH1", "pKaH2", "pKaH3"]
+SWEEP_TYPES = ["number", "str", "number", "number", "number"]
+
+
+def _rows_to_list(rows: list[dict], cols: list[str]) -> list[list]:
+    """Flatten list-of-dicts into list-of-lists ordered by `cols`.
+
+    Gradio's Dataframe treats a dict cell as an opaque JS object (rendered as
+    "[object Object]"). Returning list-of-lists with a matching `datatype` makes
+    each cell a primitive the frontend can display. None stays None (blank cell).
+    """
+    return [[r.get(c) for c in cols] for r in rows]
 
 
 def on_predict(smiles, models, temp, unit, paste_featset, paste_text, max_levels):
@@ -75,7 +92,7 @@ def on_predict(smiles, models, temp, unit, paste_featset, paste_text, max_levels
     status = (f"Predicted {len(results)} model(s) at {t_k:.2f} K "
               f"({n_cached} from cache). Full records saved under "
               f"{config.PREDICTION_CACHE_DIR}.")
-    return rows, status
+    return _rows_to_list(rows, COLS), status
 
 
 def _sweep_rows(curves: dict, ts_kelvin: list[float], unit: str) -> list[dict]:
@@ -128,7 +145,7 @@ def on_plot(smiles, head_model, n_points, step, unit, t0, max_levels):
     # Show both figures in one gallery (captioned), plus the numeric sweep table.
     gallery = [(res["pka_vs_T"], "pKa vs Temperature"),
                (res["vant_hoff"], "van't Hoff (ln K_a vs 1/T)")]
-    rows = _sweep_rows(res["curves"], ts, unit)
+    rows = _rows_to_list(_sweep_rows(res["curves"], ts, unit), SWEEP_COLS)
     n_levels = sum(1 for k in (1, 2, 3) if res["curves"].get(k))
     if n_levels == 0:
         return None, [], (f"❌ Swept {len(ts)} points but no protonation levels could "
@@ -165,7 +182,7 @@ def build_ui():
                                         placeholder="e.g. defaultdict(..., {'N3s-...': 1}) "
                                         "or 0.13,0.02,...")
         btn = gr.Button("Predict", variant="primary")
-        table = gr.Dataframe(headers=COLS, datatype=["str"] * len(COLS),
+        table = gr.Dataframe(headers=COLS, datatype=COL_TYPES,
                              interactive=False, wrap=True)
         status = gr.Markdown()
         btn.click(on_predict,
@@ -183,7 +200,7 @@ def build_ui():
         pbtn = gr.Button("Plot sweep")
         gallery = gr.Gallery(label="pKa vs Temperature   |   van't Hoff (ln K_a vs 1/T)",
                              columns=2, height=420, show_label=True)
-        sweep_table = gr.Dataframe(headers=SWEEP_COLS, datatype=["str"] * len(SWEEP_COLS),
+        sweep_table = gr.Dataframe(headers=SWEEP_COLS, datatype=SWEEP_TYPES,
                                    interactive=False, wrap=True,
                                    label="Predicted pKa at each temperature")
         pstatus = gr.Markdown()
