@@ -198,8 +198,13 @@ def build_ui():
 
 def launch(server_port: int = 7860, share: bool = False):
     ui = build_ui()
+    # Gradio only serves files to the browser if they live under the working dir,
+    # /tmp, or an explicitly allow-listed path. The sweep figures are written to
+    # the mounted cache volume (PKA_CACHE_DIR=/cache -> /cache/plots), so without
+    # this the whole response (table included) is dropped with InvalidPathError.
+    allowed = [str(config.PLOTS_DIR), str(config.CACHE_DIR)]
     ui.launch(server_name="0.0.0.0", server_port=server_port, share=share,
-              show_error=True)
+              show_error=True, allowed_paths=allowed)
 
 
 if __name__ == "__main__":
