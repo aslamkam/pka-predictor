@@ -1,0 +1,10 @@
+# Binaries ship via a GitHub Release asset (fetched automatically on first
+# run by scripts/fetch_assets.{sh,bat}), not committed to git. This keeps the
+# repo cloneable in seconds and avoids Git-LFS quota limits.
+models/
+repo/
+
+# Runtime regenerables — per-machine, never commit.
+cache/
+**/__pycache__/
+*.pyc

@@ -1,0 +1,12 @@
+# Exclude dev-only / huge / host-specific files from the Docker context.
+**/__pycache__
+**/*.pyc
+cache/
+logs/
+*.log
+.git
+.dockerignore
+# The bundle's repo/ carries the needed thesis modules; embeddings are extracted
+# on demand into the mounted /cache volume, so don't bake the multi-GB set in.
+repo/DFT/FairChem/Relaxed_Embeddings
+README.md
