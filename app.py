@@ -107,12 +107,33 @@ def on_plot(smiles, head_model, n_points, step, unit, t0, max_levels):
     unit = (unit or "C").upper()
     t0_k = _to_kelvin(t0 if t0 is not None else (0.0 if unit == "C" else 273.15), unit)
     ts = [t0_k + i * float(step or 10.0) for i in range(max(2, int(n_points or 10)))]
-    res = core.sweep_temperature(smiles, head, ts, unit=unit, max_levels=int(max_levels or 3))
+    try:
+        res = core.sweep_temperature(smiles, head, ts, unit=unit,
+                                     max_levels=int(max_levels or 3))
+    except Exception as ex:  # noqa: BLE001
+        msg = str(ex)
+        # uma-s-1p2 (facebook/UMA) is gated; a calculator-init failure is almost
+        # always a missing/invalid HuggingFace token. Match either the wrapped
+        # message or the underlying HF error text.
+        looks_gated = any(s in msg.lower() for s in
+                          ("restricted", "authenticated", "access token",
+                           "401", "gated", "calculator failed to initialise",
+                           "failed to initialize"))
+        hint = ""
+        if looks_gated:
+            hint = (" — this is the gated facebook/UMA model. Put a HuggingFace "
+                    "token in pka_app/.hf_token (or set the HF_TOKEN env var) "
+                    "and restart the app. See README > HuggingFace token.")
+        return None, [], f"❌ UMA sweep failed: {msg}{hint}"
     # Show both figures in one gallery (captioned), plus the numeric sweep table.
     gallery = [(res["pka_vs_T"], "pKa vs Temperature"),
                (res["vant_hoff"], "van't Hoff (ln K_a vs 1/T)")]
     rows = _sweep_rows(res["curves"], ts, unit)
     n_levels = sum(1 for k in (1, 2, 3) if res["curves"].get(k))
+    if n_levels == 0:
+        return None, [], (f"❌ Swept {len(ts)} points but no protonation levels could "
+                          f"be predicted (UMA could not initialize — check the "
+                          f"HuggingFace token for facebook/UMA).")
     status = (f"Swept {len(ts)} points ({res['n_cached_points']} from cache); "
               f"{n_levels} protonation level(s) predicted. "
               f"Figures + table shown below.")
@@ -134,7 +155,7 @@ def build_ui():
                 temp = gr.Number(label="Temperature", value=config.DEFAULT_T_K)
                 unit = gr.Radio(["K", "C"], value="K", label="Unit")
         models = gr.CheckboxGroup(choices=_ALL_CHOICES, label="Models (pick any)",
-                                  value=["uma-invt"])
+                                  value=["std-12C-Morgan-Fingerprints-RF"])
         with gr.Accordion("Optional: paste a precomputed feature vector "
                           "(Benson/Maginn/or to override)", open=False):
             with gr.Row():
