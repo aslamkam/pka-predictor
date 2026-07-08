@@ -32,6 +32,27 @@ CLI. Inputs and outputs are cached to disk, so a repeat prediction is instant.
 Everything persists in **`./cache/`** (predictions, extracted UMA embeddings, and
 the uma-s-1p2 download) — keep that folder to avoid re-extraction.
 
+### HuggingFace token (required for UMA models)
+
+The **UMA** models use FairChem's `facebook/UMA` (`uma-s-1p2`) checkpoint, which
+is **gated** — you must (once) accept its license, then provide a token so the
+first prediction can download it. The standard ML models need no token.
+
+1. Create a free HuggingFace account, then request access at
+   <https://huggingface.co/facebook/UMA> (approval is usually instant).
+2. Create an access token at <https://huggingface.co/settings/tokens>
+   (a **read** token is enough).
+3. Put it in **one** of these places (the launchers check both):
+   * a `pka_app/.hf_token` file containing just the token (one line; this file
+     is gitignored so it never gets committed) — easiest for double-clicking
+     `run_gui.bat`; **or**
+   * an `HF_TOKEN` environment variable.
+
+   The launchers pass the token into the container via `--env-file` (so it never
+   appears in `ps`/process listings) and delete the temp file afterwards. If no
+   token is found, the GUI still runs, but UMA predictions will fail with an
+   access error; standard models are unaffected.
+
 ## CLI (Docker)
 
 ```bash

@@ -8,3 +8,6 @@ repo/
 cache/
 **/__pycache__/
 *.pyc
+
+# HuggingFace token for the gated uma-s-1p2 model — NEVER commit this.
+.hf_token
