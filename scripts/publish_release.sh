@@ -10,7 +10,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="$(cd "$HERE/.." && pwd)"
-REPO="aslamkam/jules_experiment"
+REPO="aslamkam/pka-predictor"
 TAG="${PKA_RELEASE_TAG:-v1.0-models}"
 ASSET="$APP_DIR/pka_app_assets.tar.gz"
 

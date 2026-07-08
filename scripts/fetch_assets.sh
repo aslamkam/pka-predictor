@@ -16,7 +16,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"          # .../pka_app/scripts
 APP_DIR="$(cd "$HERE/.." && pwd)"              # .../pka_app
 SENTINEL="$APP_DIR/models/standard/12C/Morgan-Fingerprints_RF/model.joblib"
 
-DEFAULT_URL="https://github.com/aslamkam/jules_experiment/releases/download/v1.0-models"
+DEFAULT_URL="https://github.com/aslamkam/pka-predictor/releases/download/v1.0-models"
 URL="${PKA_ASSETS_URL:-$DEFAULT_URL}/pka_app_assets.tar.gz"
 
 # Already fetched? Nothing to do.

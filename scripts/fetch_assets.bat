@@ -17,7 +17,7 @@ set "SENTINEL=%APP_DIR%\models\standard\12C\Morgan-Fingerprints_RF\model.joblib"
 if exist "%SENTINEL%" exit /b 0
 
 if "%PKA_ASSETS_URL%"=="" (
-  set "URL=https://github.com/aslamkam/jules_experiment/releases/download/v1.0-models/pka_app_assets.tar.gz"
+  set "URL=https://github.com/aslamkam/pka-predictor/releases/download/v1.0-models/pka_app_assets.tar.gz"
 ) else (
   set "URL=%PKA_ASSETS_URL%/pka_app_assets.tar.gz"
 )

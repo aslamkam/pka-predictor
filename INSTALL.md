@@ -66,8 +66,8 @@ the defaults — it installs **Git Bash**, which you'll use).
 
 Open a terminal and run:
 ```
-git clone https://github.com/aslamkam/jules_experiment.git
-cd jules_experiment/pka_app
+git clone https://github.com/aslamkam/pka-predictor.git
+cd pka-predictor
 ```
 
 This downloads the app code (a few seconds). The large model files are **not** in
