@@ -59,6 +59,9 @@ def _row_for(mid: str, rec: dict) -> dict:
 COLS = ["model", "chembl_pred", "computed_pred", "pasted_pred",
         "pKaH1", "pKaH2", "pKaH3", "dH_kJmol", "cx_pKa", "notes"]
 
+# Temperature-sweep results table: one row per grid point.
+SWEEP_COLS = ["temperature", "unit", "pKaH1", "pKaH2", "pKaH3"]
+
 
 def on_predict(smiles, models, temp, unit, paste_featset, paste_text, max_levels):
     if not smiles or not models:
@@ -75,9 +78,28 @@ def on_predict(smiles, models, temp, unit, paste_featset, paste_text, max_levels
     return rows, status
 
 
+def _sweep_rows(curves: dict, ts_kelvin: list[float], unit: str) -> list[dict]:
+    """Build a display row per temperature point from the sweep curves.
+
+    curves: {level: [(t_kelvin, pKa), ...]} from core.sweep_temperature.
+    Rows are ordered by temperature; missing levels are blank (not NaN).
+    """
+    # Index each level's curve by its temperature so we can join by point.
+    by_level = {k: {round(t, 3): pk for t, pk in pts} for k, pts in curves.items()}
+    rows = []
+    for t_k in ts_kelvin:
+        t_disp = round(t_k, 2) if unit.upper() == "K" else round(t_k - config.T0_K, 2)
+        row = {"temperature": t_disp, "unit": unit.upper()}
+        for k in (1, 2, 3):
+            v = by_level.get(k, {}).get(round(t_k, 3))
+            row[f"pKaH{k}"] = None if v is None else round(float(v), 3)
+        rows.append(row)
+    return rows
+
+
 def on_plot(smiles, head_model, n_points, step, unit, t0, max_levels):
     if not smiles or not head_model:
-        return None, None, "Enter a SMILES and pick a UMA model."
+        return None, [], "Enter a SMILES and pick a UMA model."
     if head_model.startswith("uma-"):
         head = head_model[len("uma-"):]
     else:
@@ -86,9 +108,15 @@ def on_plot(smiles, head_model, n_points, step, unit, t0, max_levels):
     t0_k = _to_kelvin(t0 if t0 is not None else (0.0 if unit == "C" else 273.15), unit)
     ts = [t0_k + i * float(step or 10.0) for i in range(max(2, int(n_points or 10)))]
     res = core.sweep_temperature(smiles, head, ts, unit=unit, max_levels=int(max_levels or 3))
-    return res["pka_vs_T"], res["vant_hoff"], (
-        f"Swept {len(ts)} points ({res['n_cached_points']} from cache). "
-        f"PNGs: {res['pka_vs_T']}, {res['vant_hoff']}")
+    # Show both figures in one gallery (captioned), plus the numeric sweep table.
+    gallery = [(res["pka_vs_T"], "pKa vs Temperature"),
+               (res["vant_hoff"], "van't Hoff (ln K_a vs 1/T)")]
+    rows = _sweep_rows(res["curves"], ts, unit)
+    n_levels = sum(1 for k in (1, 2, 3) if res["curves"].get(k))
+    status = (f"Swept {len(ts)} points ({res['n_cached_points']} from cache); "
+              f"{n_levels} protonation level(s) predicted. "
+              f"Figures + table shown below.")
+    return gallery, rows, status
 
 
 def build_ui():
@@ -132,12 +160,15 @@ def build_ui():
             punit = gr.Radio(["C", "K"], value="C", label="unit")
             t0 = gr.Number(value=0, label="start T")
         pbtn = gr.Button("Plot sweep")
-        gallery = gr.Gallery(label="pKa vs T   |   van't Hoff (ln K_a vs 1/T)",
-                             columns=2, height=420)
+        gallery = gr.Gallery(label="pKa vs Temperature   |   van't Hoff (ln K_a vs 1/T)",
+                             columns=2, height=420, show_label=True)
+        sweep_table = gr.Dataframe(headers=SWEEP_COLS, datatype=["str"] * len(SWEEP_COLS),
+                                   interactive=False, wrap=True,
+                                   label="Predicted pKa at each temperature")
         pstatus = gr.Markdown()
         pbtn.click(on_plot, inputs=[smiles, head, n_points, step, punit, t0,
                                     gr.Number(value=3, visible=False)],
-                   outputs=[gallery, gallery, pstatus])
+                   outputs=[gallery, sweep_table, pstatus])
         gr.Markdown(f"_Cache: `{config.CACHE_DIR}_  |  Orca-Sigma excluded; "
                     "Benson/Maginn via ChEMBL lookup or pasted vector; "
                     "standard models are CPU-default retrained artifacts._")
