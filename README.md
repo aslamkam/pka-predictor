@@ -148,3 +148,32 @@ micromamba run -n fairchem_cpu python app.py
   it runs anywhere Docker does). For CUDA, rebuild with
   `docker build --build-arg BASE=pytorch/pytorch:2.8.0-cuda12.6-cudnn9-runtime -t pkapredict .`
   (faster embedding extraction).
+
+## Working as a submodule (development)
+
+This repo is tracked in the thesis repo (`jules_experiment`) as a **git
+submodule** at `pka_app/`, so the agent edits thesis files and app code in one
+tree while the app's canonical history lives here (`aslamkam/pka-predictor`).
+
+**Updating the app code (e.g. new models):**
+```bash
+# 1) edit + commit in the submodule, push to pka-predictor
+cd pka_app
+git add . && git commit -m "..." && git push
+
+# 2) back in the parent, bump the submodule pointer and push
+cd ..
+git add pka_app
+git commit -m "Bump pka_app submodule" && git push
+```
+
+**After a fresh clone of `jules_experiment`:**
+```bash
+git clone https://github.com/aslamkam/jules_experiment.git
+cd jules_experiment
+git submodule update --init --recursive     # populates pka_app/
+```
+
+The gitignored binaries (`models/`, `repo/`, `cache/`, `.hf_token`) are **not** in
+either git repo — run `run_gui.bat`/`run_gui.sh` once to fetch the ~412 MB asset
+bundle (or restore a local backup) before developing.
