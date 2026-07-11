@@ -66,17 +66,31 @@ STANDARD_FEATURESETS = [
 STANDARD_ALGOS = ["MLP", "RF", "SVR", "XGBoost", "CNN"]
 
 # UMA temperature heads -> (glob suffix under Basicity_pKa_2/runs, split seeds).
+# Two train/test splits are exposed: the production 80/20 split (default; keys none /
+# linear / invt / invtlnt) and a 90/10 sensitivity variant (keys *_9010), trained under the
+# identical protocol but with a 10% test fraction. Both share the same relaxed embeddings,
+# BO architecture, and 3 split-seed x 5 Stage-3-seed ensembling; only the test fraction
+# differs. The 90/10 run tags carry a `lf9010` infix (no internal underscore) so the
+# Basicity_pKa_2 aggregators' tag regex matches them as-is.
 UMA_HEADS = {
-    "none":   {"glob": "exp_relaxed_lftbaseline_s{s}_*",       "seeds": [42, 777, 123]},
-    "linear": {"glob": "exp_relaxed_lfvanthoff_s{s}_*",        "seeds": [42, 777, 123]},
-    "invt":   {"glob": "exp_relaxed_lfvanthoffinvt_s{s}_*",    "seeds": [42, 777, 123]},
-    "invtlnt":{"glob": "exp_relaxed_lfvanthoffinvtlnt_s{s}_*", "seeds": [42, 777, 123]},
+    "none":        {"glob": "exp_relaxed_lftbaseline_s{s}_*",       "seeds": [42, 777, 123]},
+    "linear":      {"glob": "exp_relaxed_lfvanthoff_s{s}_*",        "seeds": [42, 777, 123]},
+    "invt":        {"glob": "exp_relaxed_lfvanthoffinvt_s{s}_*",    "seeds": [42, 777, 123]},
+    "invtlnt":     {"glob": "exp_relaxed_lfvanthoffinvtlnt_s{s}_*", "seeds": [42, 777, 123]},
+    "none_9010":   {"glob": "exp_relaxed_lf9010tbaseline_s{s}_*",       "seeds": [42, 777, 123]},
+    "linear_9010": {"glob": "exp_relaxed_lf9010vanthoff_s{s}_*",        "seeds": [42, 777, 123]},
+    "invt_9010":   {"glob": "exp_relaxed_lf9010vanthoffinvt_s{s}_*",    "seeds": [42, 777, 123]},
+    "invtlnt_9010":{"glob": "exp_relaxed_lf9010vanthoffinvtlnt_s{s}_*", "seeds": [42, 777, 123]},
 }
 UMA_HEAD_LABELS = {
-    "none":    "UMA — standard head (no explicit T)",
-    "linear":  "UMA — linear-in-T head (van't Hoff Taylor)",
-    "invt":    "UMA — linear-in-1/T head (preferred)",
-    "invtlnt": "UMA — 1/T + lnT head (constant ΔCp°)",
+    "none":         "UMA — standard head (80/20 split)",
+    "linear":       "UMA — linear-in-T head (80/20 split)",
+    "invt":         "UMA — linear-in-1/T head (80/20 split, preferred)",
+    "invtlnt":      "UMA — 1/T + lnT head (80/20 split)",
+    "none_9010":    "UMA — standard head (90/10 split)",
+    "linear_9010":  "UMA — linear-in-T head (90/10 split)",
+    "invt_9010":    "UMA — linear-in-1/T head (90/10 split)",
+    "invtlnt_9010": "UMA — 1/T + lnT head (90/10 split)",
 }
 
 

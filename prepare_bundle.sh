@@ -12,20 +12,23 @@ mkdir -p "$DST"
 # Shared repo-root module (SklearnWrapper).
 cp "$REPO/pytorch_sklearn_wrapper.py" "$DST/"
 
-# Basicity pKa model source + the leak-free relaxed run checkpoints (4 heads x 3 seeds).
+# Basicity pKa model source + the leak-free relaxed run checkpoints (4 heads x 3 seeds),
+# for BOTH the 80/20 split (run tag lf<head>) and the 90/10 split (run tag lf9010<head>).
 BPDST="$DST/Primary_Research/Scoring_Models/Basicity_pKa_2"
 mkdir -p "$BPDST/runs"
 for f in model.py engine.py data.py data_relaxed.py data_combined.py infer.py; do
   cp "$REPO/Primary_Research/Scoring_Models/Basicity_pKa_2/$f" "$BPDST/" 2>/dev/null || true
 done
-for h in tbaseline vanthoff vanthoffinvt vanthoffinvtlnt; do
-  for s in 42 777 123; do
-    d="$(ls -d "$REPO"/Primary_Research/Scoring_Models/Basicity_pKa_2/runs/exp_relaxed_lf${h}_s${s}_* 2>/dev/null | head -1 || true)"
-    if [ -n "$d" ]; then
-      cp -r "$d" "$BPDST/runs/"
-    else
-      echo "  WARN: no run dir for head=$h seed=$s"
-    fi
+for prefix in lf lf9010; do
+  for h in tbaseline vanthoff vanthoffinvt vanthoffinvtlnt; do
+    for s in 42 777 123; do
+      d="$(ls -d "$REPO"/Primary_Research/Scoring_Models/Basicity_pKa_2/runs/exp_relaxed_${prefix}${h}_s${s}_* 2>/dev/null | head -1 || true)"
+      if [ -n "$d" ]; then
+        cp -r "$d" "$BPDST/runs/"
+      else
+        echo "  WARN: no run dir for prefix=$prefix head=$h seed=$s"
+      fi
+    done
   done
 done
 
