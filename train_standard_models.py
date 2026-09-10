@@ -25,7 +25,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from sklearn.neural_network import MLPRegressor
-from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_extraction import DictVectorizer  # noqa: F401  (unused; kept for pickled legacy artifacts)
 from sklearn.metrics import mean_absolute_error
 
 # Make the package importable when run as a script.
@@ -51,10 +51,6 @@ def _build_xy(dataset: str, featureset: str):
         return None, None, None, None
     raws = list(tbl["raw"])
     y = tbl["cx_pka"].astype(float).to_numpy()
-    if featureset == "Benson-Groups":
-        vec = DictVectorizer(sparse=False)
-        X = vec.fit_transform(raws)
-        return X.astype(np.float32), y, vec, X.shape[1]
     # Morgan / Joback / Maginn: stack numeric arrays; pad to a common width.
     arrs = []
     width = 0

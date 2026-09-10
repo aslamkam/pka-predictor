@@ -3,7 +3,7 @@
 Each artifact dir (models/standard/<dataset>/<FeatureSet>_<Algo>/) holds:
   - model.joblib      : trained estimator (.predict(X) where X is the scaled matrix)
   - scaler.joblib     : StandardScaler / MinMaxScaler (or None)
-  - vectorizer.joblib : DictVectorizer (Benson only; else None)
+  - vectorizer.joblib : optional feature vectorizer (None for the current feature sets)
   - meta.json         : featureset, algo, dataset, feat_dim, train_mae, n_train
 """
 from __future__ import annotations

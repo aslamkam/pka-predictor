@@ -1,196 +1,181 @@
-# pKa Predictor — Setup Guide (for Advisors / New Users)
+# pKa Predictor — Setup Guide
 
-This guide installs everything from scratch: Docker, the app, and access to the
-UMA model. **Allow ~1 hour the first time** (mostly downloads). After that, the
-app starts in seconds.
+This guide installs the app from scratch. **The recommended way is to let
+[Claude Code](https://claude.com/claude-code) (an AI coding agent) do the setup
+for you** — the repo ships with a `CLAUDE.md` file that tells it exactly what
+to do. No Docker is required.
 
 > **What you'll get:** a browser interface at <http://localhost:7860> where you
-> type a molecule (as a SMILES string) and get predicted pKa values from 40
-> standard ML models and 4 FairChem UMA models, plus temperature-sweep plots.
+> type a molecule (as a SMILES string) and get predicted pKa values from 30
+> standard ML models and 4 FairChem **UMA v15.1** models, plus
+> temperature-sweep plots.
 
 ---
 
 ## Prerequisites
 
 - A computer running **Windows 10/11**, **macOS**, or **Linux**.
-- ~**5 GB free disk space** (Docker + the model bundle + the UMA checkpoint).
-- An internet connection (only needed for setup and the very first prediction).
+- **Python 3.10–3.12** (the setup agent can install it for you on Windows via
+  `winget`, or you can get it from <https://www.python.org/downloads/> — on
+  Windows, tick **"Add python.exe to PATH"** during install).
+- ~**6 GB free disk space** (Python environment + model bundle + the UMA
+  checkpoint).
+- An internet connection (only needed for setup and the first UMA prediction).
 
 ---
 
-## Step 1 — Install Docker
+## Step 1 — Get the app
 
-Docker runs the app in a self-contained container, so you don't need to install
-Python or any chemistry libraries yourself.
+You need **Git** (<https://git-scm.com/downloads>; on Windows accept the
+defaults). Open a terminal (Command Prompt, PowerShell, or Terminal) and run:
 
-### Windows
-1. Go to <https://www.docker.com/products/docker-desktop/> and download
-   **Docker Desktop for Windows**.
-2. Run the installer (accept defaults). If asked, enable **WSL 2** (recommended).
-3. **Restart your computer** when prompted.
-4. Open **Docker Desktop** from the Start menu. Wait until the whale icon in the
-   system tray (bottom-right) stops animating and says **"Docker Desktop is running"**.
-   - *Note: Docker Desktop is free for personal/academic use. On first launch it
-     may ask you to sign in — you can create a free Docker account or click
-     **"Continue without signing in"**.*
-
-### macOS
-1. Download **Docker Desktop for Mac** from the same link (choose Intel or Apple
-   Silicon to match your Mac).
-2. Drag **Docker.app** to Applications, open it, wait for the whale icon to say
-   it's running.
-
-### Linux
-Install Docker Engine for your distribution:
-<https://docs.docker.com/engine/install/>. After installing, add yourself to the
-`docker` group so you don't need `sudo`:
-```
-sudo usermod -aG docker $USER
-```
-Then log out and back in.
-
-**Verify Docker works** by opening a terminal (Command Prompt / PowerShell /
-Terminal) and running:
-```
-docker --version
-docker run hello-world
-```
-If `docker run hello-world` prints "Hello from Docker!", you're set.
-
----
-
-## Step 2 — Get the app (clone the repository)
-
-You need **Git** installed (<https://git-scm.com/downloads>; on Windows, accept
-the defaults — it installs **Git Bash**, which you'll use).
-
-Open a terminal and run:
 ```
 git clone https://github.com/aslamkam/pka-predictor.git
 cd pka-predictor
 ```
 
-This downloads the app code (a few seconds). The large model files are **not** in
-the git repository — they download automatically the first time you run the app
-(Step 5).
+The large model files are **not** in git — they download automatically during
+setup (Step 3).
 
 ---
 
-## Step 3 — Set up HuggingFace access (for the UMA model) — *required for UMA predictions*
+## Step 2 — Let Claude Code do the setup (recommended)
 
-The UMA models use a model checkpoint (`uma-s-1p2`) hosted on HuggingFace that is
-**gated** — you must request access once and provide a token. *(The 40 standard
-ML models need none of this and work immediately.)*
+1. Install Claude Code if you don't have it:
+   <https://claude.com/claude-code> (one-line installer for Windows/macOS/Linux;
+   requires a Claude account).
+2. From the `pka-predictor` folder, start it:
+   ```
+   claude
+   ```
+3. Tell it:
+
+   > **"Read CLAUDE.md and set up this app natively (no Docker), then run the
+   > smoke test."**
+
+   It will create the Python virtual environment, install the dependencies,
+   download the model bundle, and verify everything works. First-time setup
+   takes ~15–40 minutes (mostly downloads: PyTorch and the model bundle are
+   large).
+
+4. Afterwards, starting the app is just: double-click **`run_gui.bat`**
+   (Windows) or run **`./run_gui.sh`** (macOS/Linux). Your browser opens at
+   <http://localhost:7860>.
+
+> **Prefer to do it by hand?** See *Manual install* below.
+> **Prefer Docker?** See *Docker alternative* below.
+
+---
+
+## Step 3 — HuggingFace access (required for the UMA models only)
+
+The UMA models use a gated model checkpoint (`uma-s-1p2`) hosted on
+HuggingFace. **The 30 standard ML models need none of this and work
+immediately.** You can do this step while Claude Code runs the setup — tell it
+your token is coming.
 
 1. **Create a free HuggingFace account:** <https://huggingface.co/join>
 2. **Request access to the model:** go to
-   <https://huggingface.co/facebook/UMA> and click **"Acknowledge license"** /
-   **"Request access"**. Approval is usually **instant** (automated). Once
-   approved, the page will say you have access.
-3. **Create an access token:**
-   - Go to <https://huggingface.co/settings/tokens>
-   - Click **"New token"**
-   - **Name:** anything (e.g., `pka-app`)
-   - **Type:** select **"Read"** (a read token is enough)
-   - Click **"Create"**
-   - **Copy the token** (it starts with `hf_...`). You won't be able to see it
-     again after you leave the page.
-4. **Save the token where the app can find it.** In the `pka_app` folder, create
-   a plain-text file named exactly **`.hf_token`** (note the leading dot) and
-   paste the token as the **only contents** of the file (one line, no spaces):
-   ```
-   hf_your_token_here
-   ```
+   <https://huggingface.co/facebook/UMA> and click **"Acknowledge license"**.
+   Approval is usually **instant**.
+3. **Create an access token:** <https://huggingface.co/settings/tokens> →
+   **"New token"** → type **"Read"** → copy the token (starts with `hf_...`).
+4. **Save it** as a plain-text file named exactly **`.hf_token`** (leading dot)
+   in the `pka-predictor` folder — the token as the only contents, one line.
 
-   **How to create the file on Windows:**
-   - Open **Notepad**.
-   - Paste your token (`hf_...`).
-   - **File → Save As...**
-   - Navigate to the `pka_app` folder.
-   - **File name:** `.hf_token` *(type the full name including the dot)*
-   - **Save as type:** "All Files (*.*)" *(important — otherwise Notepad adds `.txt`)*
-   - Save. The file should appear in the `pka_app` folder.
+   **On Windows:** open Notepad, paste the token, **File → Save As**, filename
+   `.hf_token`, **Save as type: "All Files (*.*)"** (otherwise Notepad adds
+   `.txt`).
 
-   This file is **gitignored** — it will never be uploaded to GitHub.
+   Or just ask Claude Code: *"save this HuggingFace token as .hf_token: hf_..."*
 
-> **If you skip this step:** the standard ML models still work, but the **UMA**
-> models will fail with an "access restricted" message.
+   This file is **gitignored** — it is never uploaded to GitHub.
 
 ---
 
-## Step 4 — (Windows only) Confirm `curl` and `tar` are available
+## Manual install (without Claude Code)
 
-These are built into Windows 10 (version 1803 and later) and are used to download
-the model bundle on first run. Open **Command Prompt** and run:
+From the `pka-predictor` folder:
+
+**Windows (Command Prompt):**
 ```
-curl --version
-tar --version
+python -m venv .venv
+.venv\Scripts\python -m pip install --upgrade pip
+.venv\Scripts\python -m pip install -r requirements.txt
+scripts\fetch_assets.bat
+run_gui.bat
 ```
-Both should print a version line. If not (very old Windows), install **Git for
-Windows** (<https://git-scm.com/downloads>) and use **Git Bash** to run
-`./run_gui.sh` instead of `run_gui.bat`.
 
----
-
-## Step 5 — Launch the app
-
-### Windows
-Double-click **`run_gui.bat`** in the `pka_app` folder.
-*(Or, in Command Prompt: `cd` into `pka_app` and run `run_gui.bat`.)*
-
-### macOS / Linux
-Open Terminal, `cd` into `pka_app`, and run:
+**macOS / Linux:**
 ```
+python3 -m venv .venv
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -r requirements.txt
+./scripts/fetch_assets.sh
 ./run_gui.sh
 ```
 
-### What happens on the first launch (be patient — ~20–40 min total):
-
-1. **Downloads the model bundle** (~412 MB compressed → ~728 MB unpacked). This
-   includes the 40 trained standard models, the UMA checkpoints, and the ChEMBL
-   feature data. *(One-time.)*
-2. **Builds the Docker image** (downloads PyTorch + FairChem — several minutes).
-   *(One-time.)*
-3. **Starts the GUI.** Your browser should open automatically at
-   <http://localhost:7860>. If it doesn't, open that URL manually.
-4. The **first UMA prediction** downloads the `uma-s-1p2` checkpoint (~1 GB) and
-   extracts molecular embeddings (~10–60 s per molecule on CPU). After that, the
-   same molecule is instant (cached).
-
-Leave the terminal window open while you use the app — closing it stops the app.
-To stop: press **Ctrl-C** in the terminal, or close the window.
-
-### Subsequent launches
-Just double-click `run_gui.bat` (or `./run_gui.sh`) again. It starts in
-**seconds** — the downloads and image build are skipped.
+Notes:
+- `pip install torch` pulls the large default wheel (~2 GB on Windows). For a
+  smaller CPU-only torch, install it first with
+  `pip install torch --index-url https://download.pytorch.org/whl/cpu`, then the
+  rest of `requirements.txt`.
+- `fetch_assets` downloads the trained-model bundle (standard models + UMA
+  checkpoints + ChEMBL data) from the GitHub Release. One-time.
+- On later runs, `run_gui.bat` / `run_gui.sh` skip everything that's already
+  done and start in seconds.
 
 ---
 
-## Step 6 — Using the app
+## Using the app
 
-1. **Enter a SMILES string** (the default is `C1CCCN1`, pyrrolidine). The Examples
-   list has a few common amines to try.
-2. **Pick model(s)** under "Models (pick any)":
-   - **Standard models** (e.g., `std-12C-Morgan-Fingerprints-RF`): fast, work
-     offline, no token needed. Best for a quick prediction.
-   - **UMA models** (`uma-invt` is the preferred one): more accurate, use the
-     temperature-aware FairChem model; need the HuggingFace token from Step 3.
-3. **Set temperature** (default 298.15 K; toggle unit to Celsius if preferred).
-4. Click **Predict**. Results appear in the table:
-   - Standard models show `chembl_pred`, `computed_pred`, and the experimental
-     `cx_pKa` when known.
-   - UMA models show `pKaH1`, `pKaH2`, `pKaH3` (one per protonatable nitrogen),
-     and `dH_kJmol` (enthalpy).
+1. **Enter a SMILES string** (the default is `C1CCCN1`, pyrrolidine; the
+   Examples list has a few common amines).
+2. **Pick model(s):**
+   - **Standard models** (e.g. `std-12C-Morgan-Fingerprints-RF`): fast, work
+     offline, no token needed.
+   - **UMA models** (`uma-invt` preferred): the most accurate, temperature-aware
+     v15.1 production model; needs the HuggingFace token from Step 3.
+3. **Set temperature** (default 298.15 K; toggle to Celsius if preferred).
+4. Click **Predict**:
+   - Standard models show `chembl_pred` (stored ChEMBL features),
+     `computed_pred` (features computed live from the SMILES), and the
+     experimental `cx_pKa` when known.
+   - UMA models show `pKaH1`, `pKaH2`, `pKaH3` (one per protonatable nitrogen)
+     and `dH_kJmol` (protonation enthalpy, from the 1/T heads).
 5. **UMA temperature sweep** (lower panel): pick a UMA model, set the number of
-   points and step, click **Plot sweep**. You get two figures (pKa vs T, and
-   van't Hoff) plus a table of pKa values at each temperature.
+   points and step, click **Plot sweep** → pKa-vs-T and van't Hoff figures plus
+   a table.
 
-### Tips
-- For multi-nitrogen molecules (diamines like **piperazine** `C1CNCCN1`, or
-  **ethylenediamine** `NCCN`), you'll see **pKaH1 and pKaH2** populated.
-  Single-nitrogen molecules (like pyrrolidine) only have pKaH1 — that's correct.
-- Everything is cached in the `pka_app/cache/` folder; keep it to avoid
-  re-extracting embeddings.
+**CLI** (same thing, scriptable):
+```
+run_cli.bat list                                                             :: Windows
+run_cli.bat predict --smiles "C1CCCN1" --models uma-invt --temp 298.15
+run_cli.bat plot --smiles "C1CNCCN1" --model uma-invt --n 10 --step 10 --unit C
+```
+(macOS/Linux: `./run_cli.sh ...`.)
+
+**Tips**
+- Multi-nitrogen molecules (piperazine `C1CNCCN1`, ethylenediamine `NCCN`) show
+  **pKaH1 and pKaH2**; single-nitrogen molecules only pKaH1 — that's correct.
+- The **first UMA prediction per molecule** extracts molecular embeddings on CPU
+  (~10–60 s); after that it's instant. Everything caches in `cache/` — keep
+  that folder.
+
+---
+
+## Docker alternative (optional)
+
+If you'd rather use Docker (e.g. you already have Docker Desktop), the original
+container setup is still available:
+
+- Windows: `run_gui_docker.bat` / `run_cli_docker.bat`
+- macOS/Linux: `./run_gui_docker.sh` / `./run_cli_docker.sh`
+
+These build the `pkapredict` image from `Dockerfile` (CPU by default; for CUDA:
+`docker build --build-arg BASE=pytorch/pytorch:2.8.0-cuda12.6-cudnn9-runtime -t pkapredict .`)
+and run the same app in a container. Model assets and the `cache/` folder are
+shared with the native install.
 
 ---
 
@@ -198,27 +183,27 @@ Just double-click `run_gui.bat` (or `./run_gui.sh`) again. It starts in
 
 | Problem | Likely cause / fix |
 |---|---|
-| `docker: command not found` / "Docker not running" | Start **Docker Desktop** and wait for the whale icon to say "running". |
-| `... was unexpected at this time` | You're on an old `run_gui.bat`. Pull the latest code: `git pull`. |
-| UMA prediction fails: "access restricted" / "gated" | You skipped Step 3, or the `.hf_token` file is missing/empty/has a `.txt` suffix. Re-do Step 3. |
-| `curl`/`tar` not found | See Step 4 — use Git Bash with `./run_gui.sh`. |
-| First UMA prediction is very slow | Normal — embedding extraction on CPU is ~10–60 s/molecule the first time, then cached. |
-| Page loads but predictions don't appear | Hard-refresh the browser (**Ctrl+Shift+R**). Make sure you're predicting with a model that matches what you want (standard vs UMA). |
-| "No such image: pkapredict" | The first-run build failed. Re-run `run_gui.bat`; if it fails again, note the error during the `docker build` step. |
+| `python` not found | Install Python 3.10–3.12 and tick "Add python.exe to PATH" (Windows), then open a **new** terminal. |
+| `pip install` fails on `fairchem-core` | Re-run with `DISABLE_CUDA_EXTENSION=1` set, or ask Claude Code to fix the environment. |
+| `curl`/`tar` not found (Windows) | Both ship with Windows 10 1803+. On older Windows, use Git Bash and `./run_gui.sh`. |
+| UMA prediction fails: "access restricted" / "gated" | Step 3 not done, or `.hf_token` is missing/empty/has a `.txt` suffix. Redo Step 3. |
+| First UMA prediction is very slow | Normal — CPU embedding extraction is ~10–60 s/molecule the first time, then cached. |
+| Page loads but predictions don't appear | Hard-refresh (**Ctrl+Shift+R**). Check you picked the model family you intended. |
+| `fetch_assets` download fails | The release asset may still be uploading — retry later, or set `PKA_ASSETS_URL` to a mirror. |
+| Port 7860 already in use | Another copy of the app is running; close it, or run `.venv/bin/python app.py` after editing the port in `cli.py gui --port`. |
 
 ---
 
 ## Summary checklist
 
-- [ ] Docker installed and running (`docker run hello-world` works)
-- [ ] Git installed; repo cloned; you're in `pka_app/`
-- [ ] HuggingFace account created
-- [ ] Access to `facebook/UMA` requested and approved
-- [ ] Read token created at <https://huggingface.co/settings/tokens>
-- [ ] Token saved in `pka_app/.hf_token` (one line, starts with `hf_`, **no `.txt` extension**)
-- [ ] `run_gui.bat` (Windows) or `./run_gui.sh` (macOS/Linux) runs and opens <http://localhost:7860>
-- [ ] A standard-model prediction works (e.g., pyrrolidine with `std-12C-Morgan-Fingerprints-RF`)
-- [ ] A UMA prediction works (e.g., piperazine with `uma-invt`) — confirms token is valid
+- [ ] Git installed; repo cloned
+- [ ] Claude Code installed (or willing to follow *Manual install*)
+- [ ] Setup done (venv + dependencies + model bundle) — Claude Code: *"read CLAUDE.md and set up this app"*
+- [ ] HuggingFace account + access to `facebook/UMA` approved (UMA models only)
+- [ ] Read token saved as `pka-predictor/.hf_token` (one line, no `.txt`)
+- [ ] `run_gui.bat` / `./run_gui.sh` opens <http://localhost:7860>
+- [ ] A standard-model prediction works (pyrrolidine + `std-12C-Morgan-Fingerprints-RF`)
+- [ ] A UMA prediction works (piperazine + `uma-invt`) — confirms the token
 
 ---
 

@@ -11,3 +11,6 @@ cache/
 
 # HuggingFace token for the gated uma-s-1p2 model — NEVER commit this.
 .hf_token
+
+# Native (no-Docker) install — per-machine virtual environment.
+.venv/

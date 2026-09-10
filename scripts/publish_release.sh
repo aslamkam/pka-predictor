@@ -11,7 +11,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="$(cd "$HERE/.." && pwd)"
 REPO="aslamkam/pka-predictor"
-TAG="${PKA_RELEASE_TAG:-v1.0-models}"
+TAG="${PKA_RELEASE_TAG:-v2.0-models}"
 ASSET="$APP_DIR/pka_app_assets.tar.gz"
 
 cd "$APP_DIR"
@@ -36,7 +36,7 @@ else
   gh release create "$TAG" "$ASSET" \
       --repo "$REPO" \
       --title "pKa app model assets" \
-      --notes "Standard-model artifacts (~239 MB joblib) + UMA Stage-3 checkpoints (~374 MB pt) + ChEMBL feature CSVs (~115 MB). Fetched automatically on first run by scripts/fetch_assets.{sh,bat}."
+      --notes "30 standard-model artifacts (joblib; Benson-Groups dropped for the native Windows install) + UMA v15.1 production Stage-3 checkpoints (4 temperature heads x 3 split seeds, pt) + ChEMBL feature CSVs. Fetched automatically on first run by scripts/fetch_assets.{sh,bat}."
 fi
 rm -f "$ASSET"
 echo ">> Done. The fetch scripts will now resolve the asset at:"

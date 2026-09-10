@@ -73,6 +73,8 @@ def _read_thermo(ens, base_key: str, prot_key: str) -> dict[str, float | None]:
             outs = [m.net(xt)[0] for m in models]
         cfg = models[0].cfg
         head = getattr(cfg, "temp_head", "none")
+        if head in ("none", "linear"):
+            return {}      # no direct enthalpy output for these heads
         sigma_invT = float(cfg.sigma_invT)
         Bm = float(np.mean([float(o[1]) for o in outs]))
         dH = Bm * config.R_GAS * config.LN10 / sigma_invT / 1000.0    # kJ/mol
@@ -83,8 +85,6 @@ def _read_thermo(ens, base_key: str, prot_key: str) -> dict[str, float | None]:
             dCp = -config.R_GAS * config.LN10 * Cm / sigma_lnT        # J/(mol K)
             dH = (config.R_GAS * config.LN10
                   * (Bm / sigma_invT - 298.15 * Cm / sigma_lnT) / 1000.0)
-        if head in ("none", "linear"):
-            return {}      # no direct enthalpy output for these heads
         return {"dH_25C_kJmol": round(dH, 2),
                 "dCp_JmolK": (None if dCp is None else round(dCp, 1))}
     except Exception as e:  # noqa: BLE001

@@ -5,7 +5,7 @@ Standard models report three pKa numbers side-by-side:
   - chembl_pred   : prediction from the SMILES's STORED ChEMBL feature row (if the
                     SMILES is in the dataset)
   - computed_pred : prediction from features WE compute from the SMILES (Morgan /
-                    Joback via RDKit+SMARTS; None for Benson/Maginn)
+                    Joback via RDKit+SMARTS; None for Maginn)
   - pasted_pred   : prediction from a user-supplied precomputed feature vector
 plus the experimental CX Basic pKa label when known.
 
@@ -53,8 +53,8 @@ def _standard_predict(model_id: str, canon: str, pasted_text: str | None) -> dic
     notes = []
     if lookup: notes.append(f"ChEMBL row matched by {lookup['matched_by']}")
     if computed_raw is not None: notes.append("live compute (RDKit/SMARTS)")
-    elif fs in ("Benson-Groups", "Maginn-Sigma-Profile"):
-        notes.append("no live compute (needs RMG/GCN); use ChEMBL lookup or paste")
+    elif fs == "Maginn-Sigma-Profile":
+        notes.append("no live compute (needs a GCN); use ChEMBL lookup or paste")
     if pasted_raw is not None: notes.append("pasted vector")
     return {
         "model_id": model_id, "family": "standard", "dataset": ds,

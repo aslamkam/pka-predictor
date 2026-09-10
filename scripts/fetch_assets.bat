@@ -1,9 +1,10 @@
 @echo off
 REM Download + extract the pKa app's model binaries (models\ + repo\) on first run.
 REM
-REM The trained artifacts + UMA checkpoints + ChEMBL CSVs (~728 MB) ship as a
-REM GitHub Release asset (pka_app_assets.tar.gz), fetched once. Idempotent: exits
-REM 0 if the sentinel model already exists.
+REM The trained artifacts + UMA v15.1 checkpoints + ChEMBL CSVs (~725 MB
+REM unpacked, ~414 MB download) ship as a GitHub Release asset
+REM (pka_app_assets.tar.gz), fetched once. Idempotent: exits 0 if the sentinel
+REM model already exists.
 REM
 REM Override the source with the PKA_ASSETS_URL env var (directory holding the
 REM tarball) — useful for mirrors or a draft release.
@@ -17,12 +18,12 @@ set "SENTINEL=%APP_DIR%\models\standard\12C\Morgan-Fingerprints_RF\model.joblib"
 if exist "%SENTINEL%" exit /b 0
 
 if "%PKA_ASSETS_URL%"=="" (
-  set "URL=https://github.com/aslamkam/pka-predictor/releases/download/v1.0-models/pka_app_assets.tar.gz"
+  set "URL=https://github.com/aslamkam/pka-predictor/releases/download/v2.0-models/pka_app_assets.tar.gz"
 ) else (
   set "URL=%PKA_ASSETS_URL%/pka_app_assets.tar.gz"
 )
 
-echo >> First run: fetching model assets (~728 MB download, one-time)...
+echo >> First run: fetching model assets (~414 MB download, one-time)...
 echo >>   from %URL%
 
 where curl.exe >nul 2>&1

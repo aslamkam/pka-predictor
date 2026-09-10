@@ -11,7 +11,7 @@ import pandas as pd
 
 from .. import config
 from ..smiles_util import canonicalize
-from . import morgan, joback, benson, maginn
+from . import morgan, joback, maginn
 
 # Module-level cache of loaded lookup tables: (dataset, featureset) -> DataFrame.
 _TABLES: dict[tuple[str, str], pd.DataFrame] = {}
@@ -51,17 +51,6 @@ def _build_table(dataset: str, featureset: str) -> pd.DataFrame:
         for i in range(len(merged)):
             rows.append(dict(smiles=sm[i], inchikey=ik[i], cx_pka=cx[i],
                              chembl_id=cid[i], raw=counts[i]))
-    elif featureset == "Benson-Groups":
-        df = pd.read_csv(feat_csv, dtype=str)
-        merged = master.merge(df[["Smiles", "benson_groups"]], on="Smiles", how="inner")
-        sm = merged["Smiles"].tolist(); ik = merged["Standard Inchi Key"].tolist()
-        cx = merged["cx_pka"].tolist(); cid = merged["ChEMBL ID"].tolist()
-        bg = merged["benson_groups"].fillna("").astype(str).tolist()
-        for i, txt in enumerate(bg):
-            d = benson.parse_dict(txt)
-            if d:
-                rows.append(dict(smiles=sm[i], inchikey=ik[i], cx_pka=cx[i],
-                                 chembl_id=cid[i], raw=d))
     elif featureset == "Maginn-Sigma-Profile":
         df = pd.read_csv(feat_csv, dtype=str)
         sp = df.get("El_Sigma_Profile", pd.Series(dtype=str)).fillna("").astype(str).tolist()

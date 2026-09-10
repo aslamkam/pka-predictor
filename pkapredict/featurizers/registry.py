@@ -4,12 +4,11 @@ from __future__ import annotations
 from typing import Any
 import numpy as np
 
-from . import morgan, joback, benson, maginn, chembl_lookup
+from . import morgan, joback, maginn, chembl_lookup
 
 MODULES = {
     "Morgan-Fingerprints": morgan,
     "Joback-Reid-Groups": joback,
-    "Benson-Groups": benson,
     "Maginn-Sigma-Profile": maginn,
 }
 
@@ -17,7 +16,7 @@ LIVE_COMPUTE = {"Morgan-Fingerprints", "Joback-Reid-Groups"}   # SMILES -> featu
 
 
 def featurize(featureset: str, smiles: str):
-    """Live-compute a feature from SMILES, or None if unsupported (Benson/Maginn)."""
+    """Live-compute a feature from SMILES, or None if unsupported (Maginn)."""
     mod = MODULES.get(featureset)
     if mod is None:
         return None

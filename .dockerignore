@@ -10,3 +10,5 @@ logs/
 # on demand into the mounted /cache volume, so don't bake the multi-GB set in.
 repo/DFT/FairChem/Relaxed_Embeddings
 README.md
+.venv
+.hf_token

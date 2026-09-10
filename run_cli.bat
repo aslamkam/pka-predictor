@@ -1,25 +1,37 @@
 @echo off
-REM Run the pKa Predictor CLI inside Docker (Windows).
+REM Run the pKa Predictor CLI natively on Windows (NO Docker required).
 REM   run_cli.bat list
 REM   run_cli.bat predict --smiles "C1CCCN1" --models uma-invt --temp 298.15
 REM   run_cli.bat plot --smiles "C1CCCN1" --model uma-invt --n 10 --step 10 --unit C
 cd /d "%~dp0"
 if not exist cache mkdir cache
-REM Fetch model binaries (~728 MB) on first run; no-op once present.
+
+where python >nul 2>&1
+if errorlevel 1 (
+  echo ERROR: python not found on PATH. Install Python 3.10-3.12 from https://www.python.org/downloads/ >&2
+  exit /b 1
+)
+
+if not exist .venv\Scripts\python.exe (
+  echo Creating virtual environment .venv ...
+  python -m venv .venv
+  if errorlevel 1 exit /b 1
+)
+set "PY=.venv\Scripts\python.exe"
+
+if not exist .venv\.deps_ok (
+  echo Installing dependencies - first run only ... >&2
+  "%PY%" -m pip install --upgrade pip
+  "%PY%" -m pip install -r requirements.txt
+  if errorlevel 1 exit /b 1
+  echo ok> .venv\.deps_ok
+)
+
 call "%~dp0scripts\fetch_assets.bat"
 if errorlevel 1 exit /b 1
-docker image inspect pkapredict >nul 2>&1
-if errorlevel 1 (
-  echo Building image 'pkapredict' - first run... >&2
-  docker build -t pkapredict . >&2
+
+if not defined HF_TOKEN (
+  if exist "%~dp0.hf_token" set /p HF_TOKEN=<"%~dp0.hf_token"
 )
-REM Resolve HuggingFace token (for the gated uma-s-1p2 model) into a --env-file.
-set "HF_ENV="
-REM usebackq + backticks handles the quoted script path (single-quote form breaks CMD).
-for /f "usebackq delims=" %%P in (`""%~dp0scripts\hf_env_file.bat""`) do set "HF_ENV=%%P"
-if defined HF_ENV (
-  docker run --rm -i --env-file "%HF_ENV%" -v "%CD%\cache":/cache pkapredict %*
-  del /q "%HF_ENV%" >nul 2>&1
-) else (
-  docker run --rm -i -v "%CD%\cache":/cache pkapredict %*
-)
+
+"%PY%" cli.py %*

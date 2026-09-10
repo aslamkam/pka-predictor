@@ -1,28 +1,40 @@
 #!/usr/bin/env bash
-# Launch the pKa Predictor GUI in your browser (Linux/macOS).
-# Builds the Docker image on first run, then serves the Gradio GUI on :7860.
+# Launch the pKa Predictor GUI natively (NO Docker) on Linux/macOS.
+# First run: creates .venv, pip-installs requirements.txt, fetches the model
+# asset bundle (one-time). Later runs start in seconds.
 # Predictions + extracted UMA embeddings + the uma-s-1p2 download persist in ./cache.
-set -e
+set -euo pipefail
 cd "$(dirname "$0")"
-IMAGE=pkapredict
 mkdir -p cache
-# Fetch model binaries (~728 MB) on first run; no-op once present.
-"$(dirname "$0")/scripts/fetch_assets.sh"
-if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
-  echo ">> Building image '$IMAGE' (first run; installs torch+fairchem — several minutes)..."
-  docker build -t "$IMAGE" .
+
+PY=python3
+command -v "$PY" >/dev/null 2>&1 || { echo "ERROR: python3 not found (install Python 3.10-3.12)." >&2; exit 1; }
+
+# Virtual environment + dependencies (first run only).
+if [ ! -x .venv/bin/python ]; then
+  echo ">> Creating virtual environment .venv ..."
+  "$PY" -m venv .venv
 fi
+PY=.venv/bin/python
+if [ ! -f .venv/.deps_ok ]; then
+  echo ">> Installing dependencies (first run only; torch + fairchem are large) ..."
+  "$PY" -m pip install --upgrade pip
+  "$PY" -m pip install -r requirements.txt
+  touch .venv/.deps_ok
+fi
+
+# Model binaries on first run; no-op once present.
+./scripts/fetch_assets.sh
+
+# HuggingFace token (for the gated uma-s-1p2 model; standard models work without it).
+if [ -z "${HF_TOKEN:-}" ] && [ -f .hf_token ]; then
+  HF_TOKEN="$(head -n 1 .hf_token | tr -d '[:space:]')"
+  export HF_TOKEN
+fi
+if [ -z "${HF_TOKEN:-}" ]; then
+  echo ">> No HF_TOKEN found: UMA models will fail to download uma-s-1p2. See INSTALL.md." >&2
+fi
+
 echo ">> GUI starting at http://localhost:7860  (Ctrl-C to stop)"
-# Resolve HuggingFace token (for the gated uma-s-1p2 model) into a --env-file.
-HF_ENV="$("$(dirname "$0")/scripts/hf_env_file.sh" || true)"
-cleanup_env() { [ -n "$HF_ENV" ] && [ -f "$HF_ENV" ] && rm -f "$HF_ENV"; }
-trap cleanup_env EXIT
-if [ -n "$HF_ENV" ]; then
-  # Native Windows docker (Git Bash) needs a Windows-style path for --env-file.
-  HF_ENV_NATIVE="$HF_ENV"
-  command -v cygpath >/dev/null 2>&1 && HF_ENV_NATIVE="$(cygpath -w "$HF_ENV")"
-  MSYS_NO_PATHCONV=1 docker run --rm -p 7860:7860 --env-file "$HF_ENV_NATIVE" -v "$PWD/cache":/cache "$IMAGE" gui
-else
-  echo ">> No HF_TOKEN found: UMA models will fail to download uma-s-1p2. See README." >&2
-  docker run --rm -p 7860:7860 -v "$PWD/cache":/cache "$IMAGE" gui
-fi
+( sleep 3; ( xdg-open http://localhost:7860 2>/dev/null || open http://localhost:7860 2>/dev/null ) || true ) &
+exec "$PY" app.py

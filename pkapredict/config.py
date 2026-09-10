@@ -57,40 +57,32 @@ WATER_SOLVENT = {
 # --- model families -------------------------------------------------------- #
 STANDARD_DATASETS = ["12C", "10C"]
 # Orca-Sigma-Profile is intentionally excluded (needs ORCA DFT; user decision).
+# Benson-Groups is excluded: its group-count generator is RMG, which only runs
+# in the (Linux) RMG Docker container — dropping it is what allows the native
+# no-Docker Windows install.
 STANDARD_FEATURESETS = [
     "Morgan-Fingerprints",
     "Joback-Reid-Groups",
-    "Benson-Groups",
     "Maginn-Sigma-Profile",
 ]
 STANDARD_ALGOS = ["MLP", "RF", "SVR", "XGBoost", "CNN"]
 
 # UMA temperature heads -> (glob suffix under Basicity_pKa_2/runs, split seeds).
-# Two train/test splits are exposed: the production 80/20 split (default; keys none /
-# linear / invt / invtlnt) and a 90/10 sensitivity variant (keys *_9010), trained under the
-# identical protocol but with a 10% test fraction. Both share the same relaxed embeddings,
-# BO architecture, and 3 split-seed x 5 Stage-3-seed ensembling; only the test fraction
-# differs. The 90/10 run tags carry a `lf9010` infix (no internal underscore) so the
-# Basicity_pKa_2 aggregators' tag regex matches them as-is.
+# These are the PRODUCTION v15.1 retrains (2026-08-13, amino-acid-fixed corpus;
+# CCUS MAE 0.272 +/-0.007 for the standard head) — runs tagged `lfv15*`.
+# There are no v15 90/10-split variants; the old v13 80/20+90/10 bundles were
+# superseded by these. Each head is the 3 split-seed x 5 Stage-3-seed ensemble.
 UMA_HEADS = {
-    "none":        {"glob": "exp_relaxed_lftbaseline_s{s}_*",       "seeds": [42, 777, 123]},
-    "linear":      {"glob": "exp_relaxed_lfvanthoff_s{s}_*",        "seeds": [42, 777, 123]},
-    "invt":        {"glob": "exp_relaxed_lfvanthoffinvt_s{s}_*",    "seeds": [42, 777, 123]},
-    "invtlnt":     {"glob": "exp_relaxed_lfvanthoffinvtlnt_s{s}_*", "seeds": [42, 777, 123]},
-    "none_9010":   {"glob": "exp_relaxed_lf9010tbaseline_s{s}_*",       "seeds": [42, 777, 123]},
-    "linear_9010": {"glob": "exp_relaxed_lf9010vanthoff_s{s}_*",        "seeds": [42, 777, 123]},
-    "invt_9010":   {"glob": "exp_relaxed_lf9010vanthoffinvt_s{s}_*",    "seeds": [42, 777, 123]},
-    "invtlnt_9010":{"glob": "exp_relaxed_lf9010vanthoffinvtlnt_s{s}_*", "seeds": [42, 777, 123]},
+    "none":    {"glob": "exp_relaxed_lfv15_s{s}_*",        "seeds": [42, 777, 123]},
+    "linear":  {"glob": "exp_relaxed_lfv15linear_s{s}_*",  "seeds": [42, 777, 123]},
+    "invt":    {"glob": "exp_relaxed_lfv15invt_s{s}_*",    "seeds": [42, 777, 123]},
+    "invtlnt": {"glob": "exp_relaxed_lfv15invtlnt_s{s}_*", "seeds": [42, 777, 123]},
 }
 UMA_HEAD_LABELS = {
-    "none":         "UMA — standard head (80/20 split)",
-    "linear":       "UMA — linear-in-T head (80/20 split)",
-    "invt":         "UMA — linear-in-1/T head (80/20 split, preferred)",
-    "invtlnt":      "UMA — 1/T + lnT head (80/20 split)",
-    "none_9010":    "UMA — standard head (90/10 split)",
-    "linear_9010":  "UMA — linear-in-T head (90/10 split)",
-    "invt_9010":    "UMA — linear-in-1/T head (90/10 split)",
-    "invtlnt_9010": "UMA — 1/T + lnT head (90/10 split)",
+    "none":    "UMA v15.1 — standard head (best CCUS accuracy)",
+    "linear":  "UMA v15.1 — linear-in-T head",
+    "invt":    "UMA v15.1 — linear-in-1/T head (preferred for temperature)",
+    "invtlnt": "UMA v15.1 — 1/T + lnT head (constant ΔCp°)",
 }
 
 
@@ -109,7 +101,7 @@ def _resolve_uma_run_dirs() -> dict[str, list[Path]]:
 
 
 def build_registry() -> list[dict]:
-    """The full chooser registry: 40 standard + 4 UMA entries."""
+    """The full chooser registry: 30 standard + 4 UMA entries."""
     reg: list[dict] = []
     for ds in STANDARD_DATASETS:
         for fs in STANDARD_FEATURESETS:
@@ -145,13 +137,11 @@ def standard_feature_csv(dataset: str, featureset: str) -> Path | None:
     candidates = {
         "Morgan-Fingerprints": [base / "bits2048" / "radius2"],
         "Joback-Reid-Groups":  [base],
-        "Benson-Groups":       [base],
         "Maginn-Sigma-Profile":[base / "El_GCN"],
     }.get(featureset, [base])
     name_hints = {
         "Morgan-Fingerprints": "bits2048_radius2_MFP.csv",
         "Joback-Reid-Groups":  "_JRG.csv",
-        "Benson-Groups":       "_benson.csv",
         "Maginn-Sigma-Profile":"_El_GCN_SP.csv",
     }.get(featureset, "")
     for c in candidates:

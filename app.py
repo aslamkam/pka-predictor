@@ -174,13 +174,12 @@ def build_ui():
         models = gr.CheckboxGroup(choices=_ALL_CHOICES, label="Models (pick any)",
                                   value=["std-12C-Morgan-Fingerprints-RF"])
         with gr.Accordion("Optional: paste a precomputed feature vector "
-                          "(Benson/Maginn/or to override)", open=False):
+                          "(Maginn, or to override live compute)", open=False):
             with gr.Row():
-                paste_featset = gr.Dropdown(_FEATSETS, value="Benson-Groups",
+                paste_featset = gr.Dropdown(_FEATSETS, value="Maginn-Sigma-Profile",
                                             label="Feature set")
-                paste_text = gr.Textbox(label="Feature vector / dict", lines=2,
-                                        placeholder="e.g. defaultdict(..., {'N3s-...': 1}) "
-                                        "or 0.13,0.02,...")
+                paste_text = gr.Textbox(label="Feature vector", lines=2,
+                                        placeholder="e.g. 0.13,0.02,...")
         btn = gr.Button("Predict", variant="primary")
         table = gr.Dataframe(headers=COLS, datatype=COL_TYPES,
                              interactive=False, wrap=True)
@@ -207,8 +206,9 @@ def build_ui():
         pbtn.click(on_plot, inputs=[smiles, head, n_points, step, punit, t0,
                                     gr.Number(value=3, visible=False)],
                    outputs=[gallery, sweep_table, pstatus])
-        gr.Markdown(f"_Cache: `{config.CACHE_DIR}_  |  Orca-Sigma excluded; "
-                    "Benson/Maginn via ChEMBL lookup or pasted vector; "
+        gr.Markdown(f"_Cache: `{config.CACHE_DIR}_  |  UMA models are the v15.1 "
+                    "production retrains; Orca-Sigma and Benson excluded; "
+                    "Maginn via ChEMBL lookup or pasted vector; "
                     "standard models are CPU-default retrained artifacts._")
     return ui
 
